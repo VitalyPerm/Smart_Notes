@@ -35,48 +35,23 @@ import java.util.*
 
 class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
 
-    /**
-     * An variable to get an instance calendar using the default time zone and locale.
-     */
     private var cal = Calendar.getInstance()
-
-    /**
-     * A variable for DatePickerDialog OnDateSetListener.
-     * The listener used to indicate the user has finished selecting a date. Which we will be initialize later on.
-     */
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
-
     private var saveImageToInternalStorage: Uri? = null
-
-    private var mLatitude: Double = 0.0 // A variable which will hold the latitude value.
-    private var mLongitude: Double = 0.0 // A variable which will hold the longitude value.
-
     private var mHappyPlaceDetails: HappyPlaceModel? = null
 
-    /**
-     * This function is auto created by Android when the Activity Class is created.
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
-        //This call the parent constructor
         super.onCreate(savedInstanceState)
-
-        // This is used to align the xml view to this class
         setContentView(R.layout.activity_add_happy_place)
-
-        setSupportActionBar(toolbar_add_place) // Use the toolbar to set the action bar.
-        supportActionBar?.setDisplayHomeAsUpEnabled(true) // This is to use the home back button.
-        // Setting the click event to the back button
+        setSupportActionBar(toolbar_add_place)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar_add_place.setNavigationOnClickListener {
             onBackPressed()
         }
-
         if (intent.hasExtra(MainActivity.EXTRA_PLACE_DETAILS)) {
             mHappyPlaceDetails =
                     intent.getSerializableExtra(MainActivity.EXTRA_PLACE_DETAILS) as HappyPlaceModel
         }
-
-        // https://www.tutorialkart.com/kotlin-android/android-datepicker-kotlin-example/
-        // create an OnDateSetListener
         dateSetListener =
             DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
                 cal.set(Calendar.YEAR, year)
@@ -86,7 +61,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                 updateDateInView()
             }
 
-        updateDateInView() // Here the calender instance what we have created before will give us the current date which is formatted in the format in function
+        updateDateInView()
 
         if (mHappyPlaceDetails != null) {
             supportActionBar?.title = "Edit Happy Place"
@@ -94,9 +69,6 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             et_title.setText(mHappyPlaceDetails!!.title)
             et_description.setText(mHappyPlaceDetails!!.description)
             et_date.setText(mHappyPlaceDetails!!.date)
-            et_location.setText(mHappyPlaceDetails!!.location)
-            mLatitude = mHappyPlaceDetails!!.latitude
-            mLongitude = mHappyPlaceDetails!!.longitude
 
             saveImageToInternalStorage = Uri.parse(mHappyPlaceDetails!!.image)
 
@@ -115,9 +87,8 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             R.id.et_date -> {
                 DatePickerDialog(
                     this@AddHappyPlaceActivity,
-                    dateSetListener, // This is the variable which have created globally and initialized in setupUI method.
-                    // set DatePickerDialog to point to today's date when it loads up
-                    cal.get(Calendar.YEAR), // Here the cal instance is created globally and used everywhere in the class where it is required.
+                    dateSetListener,
+                    cal.get(Calendar.YEAR),
                     cal.get(Calendar.MONTH),
                     cal.get(Calendar.DAY_OF_MONTH)
                 ).show()
@@ -132,7 +103,6 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     pictureDialogItems
                 ) { dialog, which ->
                     when (which) {
-                        // Here we have create the methods for image selection from GALLERY
                         0 -> choosePhotoFromGallery()
                         1 -> takePhotoFromCamera()
                     }
@@ -150,28 +120,21 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                         Toast.makeText(this, "Please enter description", Toast.LENGTH_SHORT)
                                 .show()
                     }
-                    et_location.text.isNullOrEmpty() -> {
-                        Toast.makeText(this, "Please select location", Toast.LENGTH_SHORT)
-                                .show()
-                    }
+
                     saveImageToInternalStorage == null -> {
                         Toast.makeText(this, "Please add image", Toast.LENGTH_SHORT).show()
                     }
                     else -> {
 
-                        // Assigning all the values to data model class.
                         val happyPlaceModel = HappyPlaceModel(
                                 if (mHappyPlaceDetails == null) 0 else mHappyPlaceDetails!!.id,
                                 et_title.text.toString(),
                                 saveImageToInternalStorage.toString(),
                                 et_description.text.toString(),
-                                et_date.text.toString(),
-                                et_location.text.toString(),
-                                mLatitude,
-                                mLongitude
+                                et_date.text.toString()
+
                         )
 
-                        // Here we initialize the database handler class.
                         val dbHandler = DatabaseHandler(this)
 
                         if (mHappyPlaceDetails == null) {
@@ -186,7 +149,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
 
                             if (updateHappyPlace > 0) {
                                 setResult(Activity.RESULT_OK);
-                                finish()//finishing activity
+                                finish()
                             }
                         }
                     }
@@ -195,20 +158,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    /**
-     * Receive the result from a previous call to
-     * {@link #startActivityForResult(Intent, int)}.  This follows the
-     * related Activity API as described there in
-     * {@link Activity#onActivityResult(int, int, Intent)}.
-     *
-     * @param requestCode The integer request code originally supplied to
-     *                    startActivityForResult(), allowing you to identify who this
-     *                    result came from.
-     * @param resultCode The integer result code returned by the child activity
-     *                   through its setResult().
-     * @param data An Intent, which can return result data to the caller
-     *               (various data can be attached to Intent "extras").
-     */
+
     public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == Activity.RESULT_OK) {
@@ -225,7 +175,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                             saveImageToInternalStorage(selectedImageBitmap)
                         Log.e("Saved Image : ", "Path :: $saveImageToInternalStorage")
 
-                        iv_place_image!!.setImageBitmap(selectedImageBitmap) // Set the selected image from GALLERY to imageView.
+                        iv_place_image!!.setImageBitmap(selectedImageBitmap)
                     } catch (e: IOException) {
                         e.printStackTrace()
                         Toast.makeText(this@AddHappyPlaceActivity, "Failed!", Toast.LENGTH_SHORT)
@@ -234,27 +184,24 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                 }
             } else if (requestCode == CAMERA) {
 
-                val thumbnail: Bitmap = data!!.extras!!.get("data") as Bitmap // Bitmap from camera
+                val thumbnail: Bitmap = data!!.extras!!.get("data") as Bitmap
 
                  saveImageToInternalStorage =
                     saveImageToInternalStorage(thumbnail)
                 Log.e("Saved Image : ", "Path :: $saveImageToInternalStorage")
 
-                iv_place_image!!.setImageBitmap(thumbnail) // Set to the imageView.
+                iv_place_image!!.setImageBitmap(thumbnail)
             }
         } else if (resultCode == Activity.RESULT_CANCELED) {
             Log.e("Cancelled", "Cancelled")
         }
     }
 
-    /**
-     * A function to update the selected date in the UI with selected format.
-     * This function is created because every time we don't need to add format which we have added here to show it in the UI.
-     */
+
     private fun updateDateInView() {
-        val myFormat = "dd.MM.yyyy" // mention the format you need
-        val sdf = SimpleDateFormat(myFormat, Locale.getDefault()) // A date format
-        et_date.setText(sdf.format(cal.time).toString()) // A selected date using format which we have used is set to the UI.
+        val myFormat = "dd.MM.yyyy"
+        val sdf = SimpleDateFormat(myFormat, Locale.getDefault())
+        et_date.setText(sdf.format(cal.time).toString())
     }
 
     /**
@@ -269,7 +216,6 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             .withListener(object : MultiplePermissionsListener {
                 override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
 
-                    // Here after all the permission are granted launch the gallery to select and image.
                     if (report!!.areAllPermissionsGranted()) {
 
                         val galleryIntent = Intent(
@@ -291,9 +237,6 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             .check()
     }
 
-    /**
-     * A method is used  asking the permission for camera and storage and image capturing and selection from Camera.
-     */
     private fun takePhotoFromCamera() {
 
         Dexter.withActivity(this)
@@ -304,7 +247,6 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             )
             .withListener(object : MultiplePermissionsListener {
                 override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
-                    // Here after all the permission are granted launch the CAMERA to capture an image.
                     if (report!!.areAllPermissionsGranted()) {
                         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                         startActivityForResult(intent, CAMERA)
@@ -321,12 +263,10 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             .check()
     }
 
-    /**
-     * A function used to show the alert dialog when the permissions are denied and need to allow it from settings app info.
-     */
+
     private fun showRationalDialogForPermissions() {
         AlertDialog.Builder(this)
-            .setMessage("It Looks like you have turned off permissions required for this feature. It can be enabled under Application Settings")
+            .setMessage("You have turned off permissions")
             .setPositiveButton(
                 "GO TO SETTINGS"
             ) { _, _ ->
@@ -345,44 +285,30 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             }.show()
     }
 
-    /**
-     * A function to save a copy of an image to internal storage for HappyPlaceApp to use.
-     */
     private fun saveImageToInternalStorage(bitmap: Bitmap): Uri {
 
-        // Get the context wrapper instance
         val wrapper = ContextWrapper(applicationContext)
 
-        // Initializing a new file
-        // The bellow line return a directory in internal storage
-        /**
-         * The Mode Private here is
-         * File creation mode: the default mode, where the created file can only
-         * be accessed by the calling application (or all applications sharing the
-         * same user ID).
-         */
+
         var file = wrapper.getDir(IMAGE_DIRECTORY, Context.MODE_PRIVATE)
 
-        // Create a file to save the image
         file = File(file, "${UUID.randomUUID()}.jpg")
 
         try {
-            // Get the file output stream
+
             val stream: OutputStream = FileOutputStream(file)
 
-            // Compress bitmap
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
 
-            // Flush the stream
+
             stream.flush()
 
-            // Close stream
             stream.close()
-        } catch (e: IOException) { // Catch the exception
+        } catch (e: IOException) {
             e.printStackTrace()
         }
 
-        // Return the saved image uri
+
         return Uri.parse(file.absolutePath)
     }
 
